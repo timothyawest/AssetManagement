@@ -213,23 +213,17 @@ export default class AuditScreen extends React.Component {
         title="Upload Data"
         onPress={ 
             ()=> {
-            console.log("Got to here");
-         
+           
             const assetsEdited = this.state.assets.filter((asset)=> asset.action !=undefined && (asset.action =='Edit' || asset.action=="Scanned" || asset.action=="Looked Up Scanned"));
-            console.log("Got to here2");
-         
             const assetsAdded  = this.state.assets.filter((asset)=> asset.action !=undefined && asset.action =='Add');
             //The isn't necessary because datahandler now just chooses the fields it wants and throws away the rest.  
             //for(asset in assetsAdded){
             //    delete assetsChanged[asset].action;
             //}
             //if everything went ok we filter out the assets that were added to the database
-            console.log(this.state.assets);
             this.dataHandler.uploadAssets(assetsAdded);
-            console.log(this.state.assets);
             this.dataHandler.updateAssets(assetsEdited);
             this.setState({assets:this.state.assets});
-            console.log(this.state.assets);
             this.setState({assets:this.state.assets.filter((asset)=>  asset.action ==undefined || !(asset.action =='Edit' || asset.action=="Scanned" || asset.action=="Looked Up Scanned" || asset.action=="Add"))});
           }
         }

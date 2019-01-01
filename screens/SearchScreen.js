@@ -42,27 +42,7 @@ export default class SearchScreen extends React.Component{
         let location = await Location.getCurrentPositionAsync({});
         this.setState({ Lat:location.coords.latitude,Lon:location.coords.longitude });
     };
-    buildSearchString(){
-        let str="";
-        if(this.state.Asset !=""){
-            str += "Asset="+this.state.Asset;
-        }
-        if(this.state.Barcode !=""){
-            if(str.length>0){
-                str +="&";
-            }
-                str += "Barcode="+this.state.Barcode;
-        }
-        if(this.state.searchInRegion){
-            if(str.length>0){
-                str +="&";
-            }
-                str += "Lat="+this.state.Lat;
-                str += "&Lon="+this.state.Lon;
-                str += "&Delta="+this.state.delta;
-        }
-        return str;
-    }
+   
     updateSearchBox(Lat,Lon,delta){
         this.setState({Lat:Lat,Lon:Lon,delta:delta});
     }
