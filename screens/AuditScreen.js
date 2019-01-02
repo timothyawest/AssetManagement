@@ -5,8 +5,10 @@ import { StyleSheet,
   View,
   Button,
   Image,
-  TouchableHighlight,
-  BackHandler } from 'react-native';
+  TouchableOpacity,
+  BackHandler,
+  Modal,
+  Picker } from 'react-native';
 import DataHandler from '../js/DataHandler';
 import {NavigationEvents} from 'react-navigation';
 
@@ -22,24 +24,33 @@ export default class AuditScreen extends React.Component {
     if(props.navigation.state.params !=undefined &&       
       props.navigation.state.params.assets !=undefined){
       state={
-        assets:props.navigation.state.params.assets,
+        assets:props.navigation.state.params.assets
+          .sort((a,b) => !a.Barcode? 1:!b.Barcode?-1:b.Barcode && parseInt(a.Barcode) - parseInt(b.Barcode)),
         isLoading:false,
         audit:false,
+        modalVisible:false,
+        sortBy:"Barcode"
       };
     //this is the default auditlist that is loaded
     } else{ 
       state = {
         isLoading: true,
         assets:[],
-        audit:true
+        audit:true,
+        modalVisible:false,
+        sortBy:"Barcode"
+
       }
       if(state.audit){
         this.dataHandler.fetchAuditList((data)=>{
+          data.sort((a,b) => !a.Barcode? 1:!b.Barcode?-1:b.Barcode && parseInt(a.Barcode) - parseInt(b.Barcode));
           this.setState({assets:data,isLoading:false});
         });
       }else{
         this.dataHandler.fetchAssetList((data)=>{
+          data.sort((a,b) => !a.Barcode? 1:!b.Barcode?-1:b.Barcode && parseInt(a.Barcode) - parseInt(b.Barcode));
           this.setState({assets:data,isLoading:false});
+  
         });
       }
     }
@@ -51,11 +62,11 @@ export default class AuditScreen extends React.Component {
         <Image resizeMode="contain" style={{alignSelf:'center'}} source={require('../assets/logo-novo.png')}/>
       </View>),
     headerRight: (
-      <TouchableHighlight  onPress={() => alert('This is a button!')}>
+      <TouchableOpacity  onPress={() => alert('This is a button!')}>
         <Image style={{width:24, height:24,marginRight:10}}
             source={require('../assets/3-line.png')}
         />
-      </TouchableHighlight>
+      </TouchableOpacity>
     ),
   };
 
@@ -80,7 +91,7 @@ export default class AuditScreen extends React.Component {
   renderEditButton(index){
     return (
       <View style={{flexDirection:'row',width:32}}>
-      <TouchableHighlight onPress={()=>{
+      <TouchableOpacity onPress={()=>{
           this.props.navigation.navigate("AddEditAssetScreen",{assets:this.state.assets,updateAssets:this.updateAssets.bind(this),index:index,action:"Edit"}); 
         }
       }>
@@ -88,7 +99,7 @@ export default class AuditScreen extends React.Component {
           source={require('../assets/edit-icon.png')}
         />
         
-      </TouchableHighlight>
+      </TouchableOpacity>
       <Text>{'    '}</Text>
       </View>
     );
@@ -100,7 +111,7 @@ export default class AuditScreen extends React.Component {
       const date = new Date(asset.Checked);
       if(asset.action==action){
         filteredAssets.push(
-        <View key={cnt} style={{backgroundColor:cnt%2?'white':'lightgrey',flexDirection:'row',flexWrap:'wrap'}}>
+        <View key={asset.id} style={{backgroundColor:cnt%2?'white':'lightgrey',flexDirection:'row',flexWrap:'wrap'}}>
         <View  style={{alignSelf:'flex-start',flex:2,flexDirection:'column'}}>
           <View style={{flexDirection:'row'}}>
             <Text style={{fontSize:16,fontWeight:'bold'}}>
@@ -124,6 +135,37 @@ export default class AuditScreen extends React.Component {
     }  );
     return filteredAssets;   
   }
+  renderOrderBy(){
+    return(<View style={{backgroundColor:'white'}}>
+    <Picker
+      selectedValue={this.state.sortBy}
+      style={{ height: 20,width:200,flex:1,color:'black'}}
+      onValueChange={(itemValue, itemIndex) =>{
+        let assets=[...this.state.assets];
+          switch(itemValue){
+            case 'Title':  assets.sort((a,b) => !a.Asset?1:!b.Asset?-1:a.Asset.toUpperCase()> b.Asset.toUpperCase()?1:-1);
+              this.setState({sortBy:"Title"})
+              break;
+            case 'Barcode':  assets.sort((a,b) => !a.Barcode? 1:!b.Barcode?-1:b.Barcode && parseInt(a.Barcode) - parseInt(b.Barcode));
+              this.setState({sortBy:"Barcode"})
+              break;
+            default:
+          }
+          this.setState({assets:assets});
+      }}>
+      <Picker.Item label={"Order by Title"} value={"Title"} />  
+      <Picker.Item label={"Order by Barcode"} value={"Barcode"} />  
+    </Picker></View>);  
+  }
+  renderHeader(style,heading){
+    return(
+    <View>
+      <Text style={style}>
+        {heading} 
+      </Text>
+    </View>
+        )
+  }
   render() {
     if(this.state.isLoading){
       return(
@@ -137,53 +179,77 @@ export default class AuditScreen extends React.Component {
     
     let formatedAssets  = this.renderTableRows(this.state.assets,undefined);
     formatedAssets.unshift(
-      <Text style={styles.unscannedAssets}>
-        Unmodified Items
-      </Text>
+      <>
+      {this.renderHeader(styles.unscannedAssets,"Unmodified Items")}
+      </>   
     )
     let formatedItemsScanned  = this.renderTableRows(this.state.assets,"Scanned");
     formatedItemsScanned.unshift(
-      <Text style={styles.scannedAssets}>
-        Scanned Items
-      </Text>
+      <>
+      {this.renderHeader(styles.scannedAssets,"Scanned Items")}
+      </>
     )
     let formatedItemsEdited  = this.renderTableRows(this.state.assets,"Edit");
     formatedItemsEdited.unshift(
-      <Text style={styles.editedAssets}>
-        Edited Items
-      </Text>
+      <>
+      {this.renderHeader(styles.editedAssets,"Edited Items")}
+      </>
+      
     )
     let formatedItemsAdded  = this.renderTableRows(this.state.assets,"Add");
     formatedItemsAdded.unshift(
-      <Text style={styles.editedAssets}>
-        Added Items
-      </Text>
+      <>
+      {this.renderHeader(styles.editedAssets,"Added Items")}
+      </>
+      
     )
   
     let formatedItemsUnknown  = this.renderTableRows(this.state.assets,"Unknown Scanned");
     formatedItemsUnknown.unshift(
-      <Text style={styles.unknownAssets}>
-        Barcodes Not in System
-      </Text>
+      <>
+      {this.renderHeader(styles.unknownAssets,"Barcodes Not in System")}
+      </>
+     
     )
     let formatedItemsLookedUp  = this.renderTableRows(this.state.assets,"Looked Up Scanned");
     formatedItemsLookedUp.unshift(
-      <Text style={styles.lookedUpAssets}>
-        Barcodes Found In Database
-      </Text>
+      <>
+      {this.renderHeader(styles.lookedUpAssets,"Barcodes Found In Database")}
+      </>
     )
     return (
       
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        
-      <ScrollView style={{alignSelf:'stretch'}}>
+       <Modal
+            animationType="slide"
+            transparent={false}
+            visible={this.state.modalVisible}
+            onRequestClose={() => {
+              alert('Modal has been closed.');
+            }}
+          >
+          <View style={{marginTop: 22}}>
+            <View>
+              <Text>Hello World!</Text>
+              <TouchableOpacity
+                onPress={() => {
+                  this.setState({modalVisible:!this.state.modalVisible});
+                }}>
+                <Text>Hide Modal</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+          </Modal> 
+  
+        <ScrollView style={{alignSelf:'stretch'}}>
+          {this.renderOrderBy()}  
           {formatedItemsUnknown.length>1&&formatedItemsUnknown}
           {formatedItemsLookedUp.length>1&&formatedItemsLookedUp}
           {formatedItemsScanned.length>1&&formatedItemsScanned}
           {formatedItemsEdited.length>1&&formatedItemsEdited}
-          {formatedItemsAdded.length>1&&formatedItemsAdded}
-         
+          {formatedItemsAdded.length>1&&formatedItemsAdded} 
           {formatedAssets.length>1&&formatedAssets}
+        
           <Button 
             title="Add New Asset"
             onPress={()=> {
@@ -240,7 +306,7 @@ const styles = StyleSheet.create({
     fontSize:18,
     fontWeight:'bold',
     color:'white',
-    backgroundColor:'red'
+    backgroundColor:'red',
   },
   container: {
     flex: 1,
