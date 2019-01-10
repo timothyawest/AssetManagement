@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "barcode",
+    "name": "Asset Reader",
     "slug": "barcode",
     "privacy": "public",
     "sdkVersion": "31.0.0",
@@ -23,7 +23,11 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.truebesttech.barcode"
+    },
+    "android": {
+      "package": "com.truebesttech.barcode"
     }
   }
 }

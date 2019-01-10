@@ -7,11 +7,13 @@ import {Text,
     StyleSheet,
     Button,
     View,
-    TouchableHighlight,
+    TouchableOpacity,
     } from "react-native";
 import {CheckBox} from 'react-native-elements';
 import {Location,Permissions} from 'expo';
 import DataHandler from '../js/DataHandler';
+import {CustomPicker} from '../js/RenderableItems';
+
 export default class SearchScreen extends React.Component{
     constructor(props){
         super(props);
@@ -20,19 +22,38 @@ export default class SearchScreen extends React.Component{
             Barcode:"",
             assets:[],
             delta:.001,
+            LocationId:null,
+            AssetTypeId:null,
             Lat:null,
             Lon:null,
+            Locations:null,
+            assetTypes:null,
             searchInRegion:false
         }
         this.dataHandler =  new DataHandler();
     }
     static navigationOptions = {
-        headerBackground:<Image style={{alignSelf:'center'}} source={require('../assets/logo-novo.png')}/>
+        headerBackground:
+        <View style={{alignSelf:'center',flex:2,flexDirection:'row',justifyContent:'center',alignItems:'flex-end'}}>
+        <Image resizeMode="contain" style={{height:50}} source={require('../assets/logo-novo.png')}/>
+        </View>
       };
+      
       componentWillMount(){
         console.log("getting locaiton");
         this._getLocationAsync();
     
+      }
+      componentDidMount(){
+        this.dataHandler.getAssetTypes(data=>{
+            console.log(data,"assettypes");
+            this.setState({assetTypes:data});
+        });
+        this.dataHandler.getLocations(data=>{
+            console.log(data,"locations");
+            data.sort((a,b)=>a.Title.toUpperCase()>b.Title.toUpperCase());
+            this.setState({Locations:data});
+        })
       }
     _getLocationAsync = async () => {
         let { status } = await Permissions.askAsync(Permissions.LOCATION);
@@ -49,7 +70,7 @@ export default class SearchScreen extends React.Component{
     renderMapButton() {
         if(this.state.Lon !=undefined && this.state.Lon != null){
           return (
-            <TouchableHighlight style={{flex:1}} onPress={()=>{
+            <TouchableOpacity style={{flex:1}} onPress={()=>{
                 this.setState({searchInRegion:true});
                 this.props.navigation.navigate("MapScreen",{coords:{latitude:this.state.Lat,longitude:this.state.Lon},delta:this.state.delta,updateSearchBox:this.updateSearchBox.bind(this)}); 
             }
@@ -58,7 +79,7 @@ export default class SearchScreen extends React.Component{
                 source={require('../assets/geo-fence.png')}
               />
               
-            </TouchableHighlight>
+            </TouchableOpacity>
           );
         }
         return <></>;
@@ -92,6 +113,28 @@ export default class SearchScreen extends React.Component{
                             }
                     }    
                 />
+                
+                
+                <CustomPicker callback={(asset)=>
+                    {
+                        this.setState({...asset}); //force a refresh
+                    }
+                } 
+                    field="LocationId" 
+                    Label="Asset Location:" 
+                    asset={this.state} 
+                    List={this.state.Locations}
+                />
+                <CustomPicker callback={(asset)=>
+                    {
+                        this.setState({...asset}); //force a refresh
+                    }
+                } 
+                    field="AssetTypeId" 
+                    Label="Asset Type:" 
+                    asset={this.state} 
+                    List={this.state.assetTypes}
+                />
                 <View style={{color:'lightgrey'}}>
                     <CheckBox
                         title="Search in Region:"
@@ -109,17 +152,21 @@ export default class SearchScreen extends React.Component{
                         {'   '}Delta:{this.state.delta!==null&&this.state.delta.toString().substr(0,7)}  
                     </Text>
                 </View>
-                <Button
-                    title="Search"
+                <TouchableOpacity
                     onPress={()=>{
-                      this.dataHandler.fetchAssetList(data => {
-                        this.setState({assets:data});
-                        console.log(data,"data");
-                        this.props.navigation.navigate("AuditScreen",{assets:data});
-                     },
-                        this.state);  
-                    }}
-                />
+                        this.dataHandler.fetchAssetList(data => {
+                          this.setState({assets:data});
+                          this.props.navigation.navigate("AssetsScreen",{assets:data});
+                       },
+                          this.state);  
+                      }}
+                >
+                <View style={{alignItems:'center',backgroundColor:'blue',padding:10}}>
+                    <Text style={{color:'white'}}>Search</Text> 
+                </View>
+
+               </TouchableOpacity>
+                
                 </ScrollView>
             </KeyboardAvoidingView>   
            

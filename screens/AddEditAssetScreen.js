@@ -14,6 +14,8 @@ import {Text,
 import {Location,Permissions} from 'expo';
 import {NavigationEvents} from 'react-navigation';
 import DataHandler from '../js/DataHandler';
+import {CustomPicker} from '../js/RenderableItems';
+
 export default class AddEditAssetScreen extends React.Component{
     constructor(props){
         super(props);
@@ -25,20 +27,30 @@ export default class AddEditAssetScreen extends React.Component{
             Lat:null,
             Lon:null,
             assetType:null,
-            assetTypes:[]
+            assetTypes:[],
+            Locations: [],
         };
         this.dataHandler =new DataHandler();
-
         this._getLocationAsync();
-        this.dataHandler.getAssetTypes(data=>{
-            console.log(data,"data");
-            this.setState({assetTypes:data})});
+        
     }
     static navigationOptions = {
-        headerBackground:<Image style={{alignSelf:'center'}} source={require('../assets/logo-novo.png')}/>,
-    };
+        headerBackground:
+        <View style={{alignSelf:'center',flex:2,flexDirection:'row',justifyContent:'center',alignItems:'flex-end'}}>
+        <Image resizeMode="contain" style={{height:50}} source={require('../assets/logo-novo.png')}/>
+        </View>
+      };
    
     componentDidMount(){
+        this.dataHandler.getAssetTypes(data=>{
+            console.log(data,"assettypes");
+            this.setState({assetTypes:data});
+        });
+        this.dataHandler.getLocations(data=>{
+            console.log(data,"locations");
+            data.sort((a,b)=>a.Title.toUpperCase()>b.Title.toUpperCase());
+            this.setState({Locations:data});
+        })
         if(this.props.navigation.state.params.action !== undefined && this.props.navigation.state.params.action=="Add"){
             this.setState({index:0});
             this.state.assets.unshift({id:Date.now().toString(),Asset:""});
@@ -104,14 +116,8 @@ export default class AddEditAssetScreen extends React.Component{
         }
         return <></>;
      
-      }
-    renderPicker(){
-        return (
-            this.state.assetTypes.map((item)=>{
-                return <Picker.Item label={item.Title} value={item.AssetTypeId} />
-            }
-            ));
-    }    
+      }    
+   
     renderFields(){
         const asset=this.state.assets[this.state.index];
         if(asset==undefined)
@@ -166,19 +172,31 @@ export default class AddEditAssetScreen extends React.Component{
                 value={asset.SerialNumber!=undefined?asset.SerialNumber.toString():""}
             />    
         </View>
-        <View style={styles.lbl}>
-            <Text>Asset Type:</Text> 
-            <Picker
-                selectedValue={this.state.assets[this.state.index].AssetTypeId}
-                style={{ height: 50,width:200}}
-                onValueChange={(itemValue, itemIndex) =>{
-                    const assets = this.state.assets;
-                    assets[this.state.index].AssetTypeId = itemValue;
-                    this.setState({assets,changed:true});
-                }}>
-                {this.renderPicker()}  
-            </Picker>
-        </View>
+        <CustomPicker callback={(asset)=>
+            {
+                this.state.assets[this.state.index]=asset;
+                this.setState({assets:this.state.assets,changed:true}); //force a refresh
+            }
+        } 
+            field={"LocationId"} 
+            Label="Asset Location:" 
+            asset={this.state.assets[this.state.index]} 
+            List={this.state.Locations}
+        />
+        <CustomPicker callback={(asset)=>
+            {
+                this.state.assets[this.state.index]=asset;
+                this.setState({assets:this.state.assets,changed:true}); //force a refresh
+            }
+        } 
+            field={"AssetTypeId"} 
+            Label="Asset Type:" 
+            asset={this.state.assets[this.state.index]} 
+            List={this.state.assetTypes}
+        />
+        
+        
+        
         <View style={styles.lbl}>
            {this.renderMapButton(asset,this.state.index)}     
             <Text>

@@ -20,7 +20,10 @@ export default class CameraScreen extends React.Component {
   }
 
   static navigationOptions = {
-    headerBackground:<Image style={{alignSelf:'center'}} source={require('../assets/logo-novo.png')}/>
+    headerBackground:
+    <View style={{alignSelf:'center',flex:2,flexDirection:'row',justifyContent:'center',alignItems:'flex-end'}}>
+    <Image resizeMode="contain" style={{height:50}} source={require('../assets/logo-novo.png')}/>
+    </View>
   };
 
   _getLocationAsync = async () => {
@@ -67,7 +70,7 @@ export default class CameraScreen extends React.Component {
           } 
           //create object if not found temp id if database changes it, but perminant if not
           else{
-            asset={Id:Date.now()};  
+            asset={id:Barcode+Date.now()};  
             asset.action="Unknown Scanned";
             asset.Barcode = Barcode;
           }
@@ -87,17 +90,17 @@ export default class CameraScreen extends React.Component {
       console.warn("latitude not yet updated -- probably not a problem");
       return;
     }
-    let copyAssets = JSON.parse(JSON.stringify(this.state.assets));
+    let Assets = this.state.assets;
     if(index==-1){
       this.checkServer(Barcode);
     } else{
-      copyAssets[index].action="Scanned";
-      copyAssets[index].Checked = new Date().toJSON();
-      copyAssets[index].Lat = this.state.location.coords.latitude;
-      copyAssets[index].Lon = this.state.location.coords.longitude;
-      copyAssets.sort((a,b) => a.Barcode - b.Barcode);
-      this.setState({assets:copyAssets});
-      this.props.navigation.state.params.updateAssets(copyAssets);
+      Assets[index].action="Scanned";
+      Assets[index].Checked = new Date().toJSON();
+      Assets[index].Lat = this.state.location.coords.latitude;
+      Assets[index].Lon = this.state.location.coords.longitude;
+      Assets.sort((a,b) => a.Barcode - b.Barcode);
+      this.setState({assets:Assets});
+      this.props.navigation.state.params.updateAssets(Assets);
     }
   }
   render() {
